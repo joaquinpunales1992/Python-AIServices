@@ -167,18 +167,26 @@ class MainApplication(tk.Frame):
     def obtnerArhivoDatos(self):
         self.vListaPreguntas.delete(0, END)
         vArchivoDatos = tkFileDialog.askopenfilename()
-        self.invocarServiciosWatson(vArchivoDatos)
+        if vArchivoDatos:
+            self.invocarServiciosWatson(vArchivoDatos)
 
 
     def invocarServiciosWatson(self, pArchivoDatos):
         vTono = WTA.Tono()
-        vResultadoTono = vTono.invocarWToneAnalyzer(pArchivoDatos)
-        self.cargarTono(vResultadoTono)
+        [vResultadoTono, vError, err] = vTono.invocarWToneAnalyzer(pArchivoDatos)
+        if (vError == 0):
+            self.cargarTono(vResultadoTono)
+        else:
+            tkMessageBox.showerror("Error: Watson Tone Analyzer", err[0])
         personalidad = WPI.Personalidad()
-        self.vResultadoPersonalidad = personalidad.invocarWatsonPI(pArchivoDatos)
-        for vConsuptionPreference in self.vResultadoPersonalidad["consumption_preferences"]:
-            self.cargarListaCategorias(vConsuptionPreference["consumption_preference_category_id"])
-        self.vBotonInvocarPI.configure(state="normal")
+        [self.vResultadoPersonalidad, vError, err] = personalidad.invocarWatsonPI(pArchivoDatos)
+        if (vError == 0):
+            for vConsuptionPreference in self.vResultadoPersonalidad["consumption_preferences"]:
+                self.cargarListaCategorias(vConsuptionPreference["consumption_preference_category_id"])
+            self.vBotonInvocarPI.configure(state="normal")
+        else:
+            tkMessageBox.showerror("Error: Watson Personality Insight", err[0])
+
 
 
 
@@ -205,5 +213,4 @@ if __name__ == "__main__":
     root = tk.Tk()
 
     MainApplication(root).pack(side="top", fill="both", expand=True)
-    root.iconbitmap(config.rutaIcono)
     root.mainloop()
